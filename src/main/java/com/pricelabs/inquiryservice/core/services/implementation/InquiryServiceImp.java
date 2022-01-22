@@ -4,6 +4,7 @@ import com.pricelabs.inquiryservice.core.dto.InquiryResponse;
 import com.pricelabs.inquiryservice.core.services.IInquiryServiceImplentation;
 import jxl.Workbook;
 import jxl.write.*;
+import org.joda.time.LocalDate;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
@@ -19,6 +20,7 @@ public class InquiryServiceImp implements IInquiryServiceImplentation {
 
     final String fileBasePath = "src/main/java/com/pricelabs/inquiryservice/api/response/";
     final String fileName = "Inquiry.xls";
+    LocalDate todaysDate = LocalDate.now();
 
     @Override
     public WritableWorkbook createExcelFile(List<InquiryResponse> inquiryResponses){
@@ -26,15 +28,20 @@ public class InquiryServiceImp implements IInquiryServiceImplentation {
             WritableWorkbook workbook = Workbook.createWorkbook(new File(fileBasePath + fileName));
             WritableSheet sheet = workbook.createSheet("Sheet 1", 0);
 
-            //Add core logic
+            //TODO: Add core logic
             WritableCell cell = new Label(0,0,"InquiryId");
-            WritableCell cell1 = new Label(1,0,"Inquiry");
-            WritableCell cell2 = new Label(2,0,"Price");
-
             sheet.addCell(cell);
-            sheet.addCell(cell1);
-            sheet.addCell(cell2);
 
+            WritableCell cell1 = new Label(1,0,"Inquiry");
+            sheet.addCell(cell1);
+
+            for(int day=0;day<365;day++){
+                int currDay = day+1;
+                LocalDate date = todaysDate.plusDays(day);
+                String nextDay = date.getDayOfMonth() + "/" + date.getMonthOfYear() + "/" + date.getYear();
+                WritableCell cell2 = new Label(2+day,0,nextDay);
+                sheet.addCell(cell2);
+            }
             workbook.write();
             workbook.close();
             return  workbook;
