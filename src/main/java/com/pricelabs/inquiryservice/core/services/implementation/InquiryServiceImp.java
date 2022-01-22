@@ -4,17 +4,13 @@ import com.pricelabs.inquiryservice.core.dto.InquiryResponse;
 import com.pricelabs.inquiryservice.core.services.IInquiryServiceImplentation;
 import jxl.Workbook;
 import jxl.write.*;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 
@@ -22,14 +18,15 @@ import java.util.List;
 public class InquiryServiceImp implements IInquiryServiceImplentation {
 
     final String fileBasePath = "src/main/java/com/pricelabs/inquiryservice/api/response/";
+    final String fileName = "Inquiry.xls";
 
     @Override
     public WritableWorkbook createExcelFile(List<InquiryResponse> inquiryResponses){
         try {
-            WritableWorkbook workbook = Workbook.createWorkbook(new File(fileBasePath + "First.xls"));
+            WritableWorkbook workbook = Workbook.createWorkbook(new File(fileBasePath + fileName));
             WritableSheet sheet = workbook.createSheet("Sheet 1", 0);
 
-            //Add core lojik
+            //Add core logic
             WritableCell cell = new Label(0,0,"InquiryId");
             WritableCell cell1 = new Label(1,0,"Inquiry");
             WritableCell cell2 = new Label(2,0,"Price");
@@ -49,25 +46,26 @@ public class InquiryServiceImp implements IInquiryServiceImplentation {
     }
 
     @Override
-    public void downloadExcelFileService(WritableWorkbook workbook) throws IOException {
+    public void downloadExcelFileService(WritableWorkbook workbook, HttpServletResponse response) throws IOException {
+        File file = new File(fileBasePath + fileName);
+        response.setContentType("application/vnd.ms-excel");
+        response.setHeader("Content-Disposition", "attachment; filename=" +fileName);
+        response.setHeader("Content-Transfer-Encoding", "binary");
+
         try {
-            File file = new File(fileBasePath + "First.xls");
-            HttpHeaders header = new HttpHeaders();
-            header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=First.xls");
-            header.add("Cache-Control", "no-cache, no-store, must-revalidate");
-            header.add("Pragma", "no-cache");
-//            header.add("Expires", "0");
-
-            Path path = Paths.get(file.getAbsolutePath());
-            ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
-
-            ResponseEntity.ok()
-                    .headers(header)
-                    .contentLength(file.length())
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(resource);
-        }catch (IOException e){
+            BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream());
+            FileInputStream fis = new FileInputStream(fileBasePath+fileName);
+            int len;
+            byte[] buf = new byte[1024];
+            while((len = fis.read(buf)) > 0) {
+                bos.write(buf,0,len);
+            }
+            bos.close();
+            response.flushBuffer();
+        }
+        catch(IOException e) {
             System.out.println("Downloading failed with an error message: " + e);
+            e.printStackTrace();
         }
     }
 

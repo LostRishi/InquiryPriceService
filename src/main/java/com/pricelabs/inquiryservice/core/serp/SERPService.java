@@ -63,7 +63,7 @@ public class SERPService {
 
             ResponseBody body = postResponse.getBody();
 
-            System.out.println("Response Body is: " + body.asString());
+//            System.out.println("Response Body is: " + body.asString());
             return body.toString();
         } catch (IOException | ParseException e) {
             System.out.println("Exception in getInquiries function with message: " + e.getMessage());
